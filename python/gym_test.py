@@ -2,6 +2,8 @@ import gym
 from gym import envs
 env = gym.make('CartPole-v0')
 
+print dir(gym)
+print dir(gym.spaces)
 print(envs.registry.all())
 print("action space")
 print(env.action_space)
