@@ -64,7 +64,7 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
           if t[3]:
               terminal=True
       lr = lr*decay_rate
-  return Q
+  return Q.copy()
 
 def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the SARSA algorithm with epsilon-greedy exploration strategy
@@ -95,8 +95,44 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
   ############################
   # YOUR IMPLEMENTATION HERE #
   ############################
+  Q = np.zeros((env.nS,env.nA))
+  #P[state][action] is tuples with (probability, nextstate, reward, terminal)
+  P = env.P
+  for ep in range(num_episodes):
+      terminal = False
+      s = 0
 
-  return np.ones((env.nS, env.nA))
+      #sample a first action
+      u = np.random.rand(1)
+      if u > e:
+          a = np.argmax(Q[s,:])
+      else:
+          a = np.random.randint(env.nA)
+
+      while not terminal:
+          #sample new state
+          u = np.random.rand(1)
+          for tup in P[s][a]:
+              u = u - tup[0]
+              if u <= 0:
+                  t = tup
+                  break
+
+          #sample another action
+          u = np.random.rand(1)
+          if u > e:
+              aprime = np.argmax(Q[t[1],:])
+          else:
+              aprime = np.random.randint(env.nA)
+
+          q = t[2] + gamma*Q[t[1],aprime]
+          Q[s,a] = (1-lr)*Q[s,a] + lr*q
+          s = t[1]
+          a = aprime
+          if t[3]:
+              terminal=True
+      lr = lr*decay_rate
+  return Q.copy()
 
 def render_single_Q(env, Q):
   """Renders Q function once on environment. Watch your agent play!
@@ -122,12 +158,43 @@ def render_single_Q(env, Q):
 
   print "Episode reward: %f" % episode_reward
 
+
+def MCRewardCalc(env, Q, num_episodes=100):
+    """Renders Q function once on environment. Watch your agent play!
+
+    Parameters
+    ----------
+    env: gym.core.Environment
+      Environment to play Q function on. Must have nS, nA, and P as
+      attributes.
+    Q: np.array of shape [env.nS x env.nA]
+      state-action values.
+    """
+    total_reward = 0
+    for i in range(num_episodes):
+      episode_reward = 0
+      state = env.reset()
+      done = False
+      while not done:
+        #env.render()
+        #time.sleep(0.5) # Seconds between frames. Modify as you wish.
+        action = np.argmax(Q[state])
+        state, reward, done, _ = env.step(action)
+        episode_reward += reward
+      print "{} Episode reward: {}".format(i,episode_reward)
+      total_reward+=episode_reward
+    return float(total_reward)/num_episodes
+
 # Feel free to run your own debug code in main!
 def main():
   env = gym.make('Stochastic-4x4-FrozenLake-v0')
+  #env = gym.make('Deterministic-4x4-FrozenLake-v0')
   Q = learn_Q_QLearning(env)
-  # Q = learn_Q_SARSA(env)
+  Qsarsa = learn_Q_SARSA(env)
   render_single_Q(env, Q)
+  render_single_Q(env, Qsarsa)
+  print MCRewardCalc(env, Q)
+  print MCRewardCalc(env, Qsarsa)
 
 if __name__ == '__main__':
     main()
