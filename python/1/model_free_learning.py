@@ -5,6 +5,7 @@
 import numpy as np
 import gym
 import time
+from lake_envs import *
 
 def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the Q-learning algorithm with epsilon-greedy exploration strategy.
@@ -15,14 +16,14 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
   env: gym.core.Environment
     Environment to compute Q function for. Must have nS, nA, and P as
     attributes.
-  num_episodes: int 
+  num_episodes: int
     Number of episodes of training.
   gamma: float
     Discount factor. Number in range [0, 1)
   learning_rate: float
     Learning rate. Number in range [0, 1)
   e: float
-    Epsilon value used in the epsilon-greedy method. 
+    Epsilon value used in the epsilon-greedy method.
   decay_rate: float
     Rate at which learning rate falls. Number in range [0, 1)
 
@@ -31,12 +32,39 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
   np.array
     An array of shape [env.nS x env.nA] representing state, action values
   """
-  
+
   ############################
   # YOUR IMPLEMENTATION HERE #
   ############################
+  Q = np.zeros((env.nS,env.nA))
+  #P[state][action] is tuples with (probability, nextstate, reward, terminal)
+  P = env.P
+  for ep in range(num_episodes):
+      terminal = False
+      s = 0
+      while not terminal:
+          #sample an action
+          u = np.random.rand(1)
+          if u > e:
+              a = np.argmax(Q[s,:])
+          else:
+              a = np.random.randint(env.nA)
 
-  return np.zeros((env.nS, env.nA))
+          #sample new state
+          u = np.random.rand(1)
+          for tup in P[s][a]:
+              u = u - tup[0]
+              if u <= 0:
+                  t = tup
+                  break
+
+          q = t[2] + gamma*np.amax(Q[t[1],:])
+          Q[s,a] = (1-lr)*Q[s,a] + lr*q
+          s = t[1]
+          if t[3]:
+              terminal=True
+      lr = lr*decay_rate
+  return Q
 
 def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the SARSA algorithm with epsilon-greedy exploration strategy
@@ -47,14 +75,14 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
   env: gym.core.Environment
     Environment to compute Q function for. Must have nS, nA, and P as
     attributes.
-  num_episodes: int 
+  num_episodes: int
     Number of episodes of training.
   gamma: float
     Discount factor. Number in range [0, 1)
   learning_rate: float
     Learning rate. Number in range [0, 1)
   e: float
-    Epsilon value used in the epsilon-greedy method. 
+    Epsilon value used in the epsilon-greedy method.
   decay_rate: float
     Rate at which learning rate falls. Number in range [0, 1)
 

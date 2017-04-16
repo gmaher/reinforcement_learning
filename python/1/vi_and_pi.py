@@ -42,7 +42,6 @@ def value_iteration(P, nS, nA, gamma=0.9, max_iteration=20, tol=1e-3):
 	for i in range(max_iteration):
 		for s in range(nS):
 			best_v = 0
-
 			for a in P[s].keys():
 				v = 0
 				for tup in P[s][a]:
