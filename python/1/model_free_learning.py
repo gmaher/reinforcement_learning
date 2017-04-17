@@ -6,6 +6,7 @@ import numpy as np
 import gym
 import time
 from lake_envs import *
+import matplotlib.pyplot as plt
 
 def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the Q-learning algorithm with epsilon-greedy exploration strategy.
@@ -37,8 +38,10 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
   # YOUR IMPLEMENTATION HERE #
   ############################
   Q = np.zeros((env.nS,env.nA))
+  #Q = np.random.rand(env.nS,env.nA)
   #P[state][action] is tuples with (probability, nextstate, reward, terminal)
   P = env.P
+  rewards = []
   for ep in range(num_episodes):
       terminal = False
       s = 0
@@ -63,8 +66,10 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
           s = t[1]
           if t[3]:
               terminal=True
-      lr = lr*decay_rate
-  return Q.copy()
+              rewards.append(t[2])
+      #lr = lr*decay_rate
+      e = e*decay_rate
+  return Q.copy(),rewards
 
 def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the SARSA algorithm with epsilon-greedy exploration strategy
@@ -96,8 +101,10 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
   # YOUR IMPLEMENTATION HERE #
   ############################
   Q = np.zeros((env.nS,env.nA))
+  #Q = np.random.rand(env.nS,env.nA)
   #P[state][action] is tuples with (probability, nextstate, reward, terminal)
   P = env.P
+  rewards = []
   for ep in range(num_episodes):
       terminal = False
       s = 0
@@ -113,6 +120,7 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
           #sample new state
           u = np.random.rand(1)
           for tup in P[s][a]:
+              #print "u = {} tup[0] = {} tup[1] = {}".format(u,tup[0],tup[1])
               u = u - tup[0]
               if u <= 0:
                   t = tup
@@ -125,14 +133,18 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
           else:
               aprime = np.random.randint(env.nA)
 
+          #print "aprime = {}".format(aprime)
+
           q = t[2] + gamma*Q[t[1],aprime]
           Q[s,a] = (1-lr)*Q[s,a] + lr*q
           s = t[1]
           a = aprime
           if t[3]:
               terminal=True
-      lr = lr*decay_rate
-  return Q.copy()
+              rewards.append(t[2])
+      #lr = lr*decay_rate
+      e = e*decay_rate
+  return Q.copy(),rewards
 
 def render_single_Q(env, Q):
   """Renders Q function once on environment. Watch your agent play!
@@ -197,4 +209,37 @@ def main():
   print MCRewardCalc(env, Qsarsa)
 
 if __name__ == '__main__':
-    main()
+  env = gym.make('Stochastic-4x4-FrozenLake-v0')
+  #env = gym.make('Deterministic-4x4-FrozenLake-v0')
+  Q, rQ = learn_Q_QLearning(env, num_episodes=2000, decay_rate=0.999)
+  Qsarsa, rSarsa = learn_Q_SARSA(env, num_episodes=2000, decay_rate=0.999)
+  render_single_Q(env, Q)
+  render_single_Q(env, Qsarsa)
+  print MCRewardCalc(env, Q)
+  print MCRewardCalc(env, Qsarsa)
+# main()
+
+plt.figure()
+plt.plot(rQ, color='r', linewidth=2, label='Q-learning')
+plt.plot(rSarsa, color='b', linewidth=2, label='SARSA')
+plt.xlabel('episode')
+plt.ylabel('reward')
+plt.legend()
+plt.savefig('model_free.pdf', dpi=500)
+
+def runningMean(l):
+    means = [0]*len(l)
+    mu = l[0]
+    means[0] = mu
+    for i in range(1,len(l)):
+        mu = mu + 1.0/(i+1)*(l[i]-mu)
+        means[i] = mu
+    return means
+
+plt.figure()
+plt.plot(runningMean(rQ), color='r', linewidth=2, label='Q-learning')
+plt.plot(runningMean(rSarsa), color='b', linewidth=2, label='SARSA')
+plt.xlabel('episode')
+plt.ylabel('reward')
+plt.legend()
+plt.savefig('model_free_2.pdf', dpi=500)
