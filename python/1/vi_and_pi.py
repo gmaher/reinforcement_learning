@@ -42,7 +42,7 @@ def value_iteration(P, nS, nA, gamma=0.9, max_iteration=20, tol=1e-3):
 	for i in range(max_iteration):
 		for s in range(nS):
 			best_v = 0
-			for a in P[s].keys():
+			for a in range(len(P[s])):
 				v = 0
 				for tup in P[s][a]:
 					v += tup[0]*(tup[2]+gamma*V[tup[1]])
@@ -131,7 +131,7 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
 	for s in range(nS):
 		best_v = 0
 		best_a = 0
-		for a in P[s].keys():
+		for a in range(len(P[s])):
 			v = 0
 			for tup in P[s][a]:
 				v += tup[0]*(tup[2]+gamma*value_from_policy[tup[1]])

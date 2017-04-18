@@ -8,7 +8,7 @@ import time
 from lake_envs import *
 import matplotlib.pyplot as plt
 
-def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
+def learn_Q_QLearning(env, num_episodes=5000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the Q-learning algorithm with epsilon-greedy exploration strategy.
   Update Q at the end of every episode.
 
@@ -69,9 +69,10 @@ def learn_Q_QLearning(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_r
               rewards.append(t[2])
       #lr = lr*decay_rate
       e = e*decay_rate
-  return Q.copy(),rewards
+  np.save('qlearn_rewards.npy',rewards)
+  return Q.copy()
 
-def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
+def learn_Q_SARSA(env, num_episodes=5000, gamma=0.95, lr=0.1, e=0.8, decay_rate=0.99):
   """Learn state-action values using the SARSA algorithm with epsilon-greedy exploration strategy
   Update Q at the end of every episode.
 
@@ -144,7 +145,8 @@ def learn_Q_SARSA(env, num_episodes=2000, gamma=0.95, lr=0.1, e=0.8, decay_rate=
               rewards.append(t[2])
       #lr = lr*decay_rate
       e = e*decay_rate
-  return Q.copy(),rewards
+  np.save('sarsa_rewards.npy',rewards)
+  return Q.copy()
 
 def render_single_Q(env, Q):
   """Renders Q function once on environment. Watch your agent play!
@@ -211,17 +213,21 @@ def main():
 if __name__ == '__main__':
   env = gym.make('Stochastic-4x4-FrozenLake-v0')
   #env = gym.make('Deterministic-4x4-FrozenLake-v0')
-  Q, rQ = learn_Q_QLearning(env, num_episodes=2000, decay_rate=0.999)
-  Qsarsa, rSarsa = learn_Q_SARSA(env, num_episodes=2000, decay_rate=0.999)
+  Q = learn_Q_QLearning(env, num_episodes=5000, decay_rate=0.999)
+  Qsarsa = learn_Q_SARSA(env, num_episodes=5000, decay_rate=0.999)
   render_single_Q(env, Q)
   render_single_Q(env, Qsarsa)
   print MCRewardCalc(env, Q)
   print MCRewardCalc(env, Qsarsa)
 # main()
 
+rQ = np.load('qlearn_rewards.npy')
+rSarsa = np.load('sarsa_rewards.npy')
+rModel = np.load('model_based_rewards.npy')
 plt.figure()
 plt.plot(rQ, color='r', linewidth=2, label='Q-learning')
 plt.plot(rSarsa, color='b', linewidth=2, label='SARSA')
+plt.plot(rModel, color='g', linewidth=2, label='Model-based')
 plt.xlabel('episode')
 plt.ylabel('reward')
 plt.legend()
@@ -239,6 +245,7 @@ def runningMean(l):
 plt.figure()
 plt.plot(runningMean(rQ), color='r', linewidth=2, label='Q-learning')
 plt.plot(runningMean(rSarsa), color='b', linewidth=2, label='SARSA')
+plt.plot(runningMean(rModel), color='g', linewidth=2, label='Model-based')
 plt.xlabel('episode')
 plt.ylabel('reward')
 plt.legend()
