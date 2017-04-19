@@ -53,6 +53,7 @@ def value_iteration(P, nS, nA, gamma=0.9, max_iteration=20, tol=1e-3):
 		if np.amax(np.abs(V-V_old)) < tol:
 			return V,policy
 		V_old = V.copy()
+		print 'not converged'
 	return V, policy
 
 
@@ -231,7 +232,21 @@ def render_single(env, policy):
 	env.render();
 	print "Episode reward: %f" % episode_reward
 
-
+def MCRewardCalc(env, Q, num_episodes=100):
+    total_reward = 0
+    for i in range(num_episodes):
+      episode_reward = 0
+      state = env.reset()
+      done = False
+      while not done:
+        #env.render()
+        #time.sleep(0.5) # Seconds between frames. Modify as you wish.
+        action = Q[state]
+        state, reward, done, _ = env.step(action)
+        episode_reward += reward
+      print "{} Episode reward: {}".format(i,episode_reward)
+      total_reward+=episode_reward
+    return float(total_reward)/num_episodes
 # Feel free to run your own debug code in main!
 # Play around with these hyperparameters.
 if __name__ == "__main__":
@@ -241,7 +256,9 @@ if __name__ == "__main__":
 	print env.__doc__
 	print "Here is an example of state, action, reward, and next state"
 	example(env)
-	V_vi, p_vi = value_iteration(env.P, env.nS, env.nA, gamma=0.9, max_iteration=200, tol=1e-3)
-	V_pi, p_pi = policy_iteration(env.P, env.nS, env.nA, gamma=0.9, max_iteration=200, tol=1e-3)
-	render_single(env, p_vi)
-	render_single(env, p_pi)
+	V_vi, p_vi = value_iteration(env.P, env.nS, env.nA, gamma=0.9, max_iteration=100, tol=1e-3)
+	V_pi, p_pi = policy_iteration(env.P, env.nS, env.nA, gamma=0.9, max_iteration=100, tol=1e-3)
+	print MCRewardCalc(env,p_vi,100)
+	print MCRewardCalc(env,p_pi,100)
+	# render_single(env, p_vi)
+	# render_single(env, p_pi)
