@@ -25,7 +25,7 @@ class LinearSchedule(object):
         """
         ##############################################################
         """
-        TODO: modify self.epsilon such that 
+        TODO: modify self.epsilon such that
                for t = 0, self.epsilon = self.eps_begin
                for t = self.nsteps, self.epsilon = self.eps_end
                linear decay between the two
@@ -33,9 +33,10 @@ class LinearSchedule(object):
               self.epsilon should never go under self.eps_end
         """
         ##############################################################
-        ################ YOUR CODE HERE - 3-4 lines ################## 
+        ################ YOUR CODE HERE - 3-4 lines ##################
 
-        pass
+        self.epsilon = (1.0-float(t)/self.nsteps)*self.eps_begin +\
+            float(t)/self.nsteps*self.eps_end
 
         ##############################################################
         ######################## END YOUR CODE ############## ########
@@ -74,7 +75,13 @@ class LinearExploration(LinearSchedule):
         ##############################################################
         ################ YOUR CODE HERE - 4-5 lines ##################
 
-        pass
+        r = np.random.rand(1)
+        if r < self.epsilon:
+            a = np.random.randint(4)
+        else:
+            a = best_action
+
+        return a
 
         ##############################################################
         ######################## END YOUR CODE ############## ########
@@ -84,7 +91,7 @@ class LinearExploration(LinearSchedule):
 def test1():
     env = EnvTest((5, 5, 1))
     exp_strat = LinearExploration(env, 1, 0, 10)
-    
+
     found_diff = False
     for i in range(10):
         rnd_act = exp_strat.get_action(0)
@@ -106,7 +113,7 @@ def test2():
 def test3():
     env = EnvTest((5, 5, 1))
     exp_strat = LinearExploration(env, 1, 0.5, 10)
-    exp_strat.update(20)
+    exp_strat.update(10)
     assert exp_strat.epsilon == 0.5, "Test 3 failed"
     print("Test3: ok")
 
