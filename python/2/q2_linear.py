@@ -60,11 +60,11 @@ class Linear(DQN):
         hist = self.config.state_history
 
         self.s = tf.placeholder(shape=[None,w,h,c*hist], dtype=tf.uint8)
-        self.a = tf.placeholder(shape=[None], dtype=tf.int32)
-        self.r = tf.placeholder(shape=[None], dtype=tf.float32)
+        self.a = tf.placeholder(shape=None, dtype=tf.int32)
+        self.r = tf.placeholder(shape=None, dtype=tf.float32)
         self.sp = tf.placeholder(shape=[None,w,h,c*hist], dtype=tf.uint8)
-        self.done_mask = tf.placeholder(shape=[None],dtype=tf.bool)
-        self.lr = tf.placeholder(shape=[1],dtype=tf.float32)
+        self.done_mask = tf.placeholder(shape=None,dtype=tf.bool)
+        self.lr = tf.placeholder(shape=None,dtype=tf.float32)
         self.ss = state_shape
         ##############################################################
         ######################## END YOUR CODE #######################
@@ -106,7 +106,7 @@ class Linear(DQN):
         num_actions = self.env.action_space.n
         with tf.variable_scope(scope):
             shape = self.ss
-            s = tf.reshape(state,shape=(self.config.batch_size,shape[0]*shape[1]*shape[2]))
+            s = tf.reshape(state,shape=(-1,shape[0]*shape[1]*shape[2]*self.config.state_history))
             print s
             out = layers.fully_connected(inputs=s, num_outputs=num_actions,
                 weights_initializer=layers.xavier_initializer(), reuse=reuse,

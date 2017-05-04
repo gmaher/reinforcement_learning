@@ -38,6 +38,8 @@ class LinearSchedule(object):
         self.epsilon = (1.0-float(t)/self.nsteps)*self.eps_begin +\
             float(t)/self.nsteps*self.eps_end
 
+        if self.epsilon < self.eps_end:
+            self.epsilon = self.eps_end
         ##############################################################
         ######################## END YOUR CODE ############## ########
 
