@@ -65,7 +65,7 @@ class Linear(DQN):
         self.sp = tf.placeholder(shape=[None,w,h,c*hist], dtype=tf.uint8)
         self.done_mask = tf.placeholder(shape=[None],dtype=tf.bool)
         self.lr = tf.placeholder(shape=[1],dtype=tf.float32)
-
+        self.ss = state_shape
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -85,7 +85,6 @@ class Linear(DQN):
         """
         # this information might be useful
         num_actions = self.env.action_space.n
-        out = state
 
         ##############################################################
         """
@@ -106,10 +105,13 @@ class Linear(DQN):
         ################ YOUR CODE HERE - 2-3 lines ##################
         num_actions = self.env.action_space.n
         with tf.variable_scope(scope):
-            out = layers.fully_connected(inputs=state, num_outputs=num_actions,
+            shape = self.ss
+            s = tf.reshape(state,shape=(self.config.batch_size,shape[0]*shape[1]*shape[2]))
+            print s
+            out = layers.fully_connected(inputs=s, num_outputs=num_actions,
                 weights_initializer=layers.xavier_initializer(), reuse=reuse,
-                scope=scope)
-
+                scope=scope, activation_fn=None)
+            print out
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -161,7 +163,7 @@ class Linear(DQN):
         for i in range(len(qlist)):
             oplist.append(tf.assign(q_target_list[i],qlist[i]))
 
-        self.update_target_op = tf.group(oplist)
+        self.update_target_op = tf.group(*oplist)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -201,8 +203,15 @@ class Linear(DQN):
         ##############################################################
         ##################### YOUR CODE HERE - 4-5 lines #############
 
-        pass
-
+        best_actions = tf.reduce_max(target_q, axis=1)
+        a_onehot = tf.one_hot(self.a,num_actions,axis=-1, dtype=tf.float32)
+        print q
+        print a_onehot
+        selected_q = tf.reduce_sum(q*a_onehot,axis=1)
+        mask = 1-tf.cast(self.done_mask,dtype=tf.int32)
+        mask = tf.cast(mask,dtype=tf.float32)
+        diff = tf.square(self.r + self.config.gamma*mask*best_actions - selected_q)
+        self.loss = tf.reduce_mean(diff)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -238,8 +247,19 @@ class Linear(DQN):
         ##############################################################
         #################### YOUR CODE HERE - 8-12 lines #############
 
-        pass
+        #with tf.variable_scope(scope):
+        opt = tf.train.AdamOptimizer(self.lr)
+        trainable_var_key = tf.GraphKeys.TRAINABLE_VARIABLES
+        var_list = tf.get_collection(key=trainable_var_key, scope=scope)
 
+        grads = opt.compute_gradients(self.loss,var_list)
+
+        if self.config.grad_clip:
+            grads = [(tf.clip_by_norm(g,self.config.clip_val),var) for g,var in grads]
+
+        self.train_op = opt.apply_gradients(grads)
+        g = [G[0] for G in grads]
+        self.grad_norm = tf.global_norm(g)
         ##############################################################
         ######################## END YOUR CODE #######################
 
