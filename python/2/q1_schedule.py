@@ -74,10 +74,10 @@ class LinearExploration(LinearSchedule):
         """
         ##############################################################
         ################ YOUR CODE HERE - 4-5 lines ##################
-
+        num_actions = self.env.action_space.n
         r = np.random.rand(1)
         if r < self.epsilon:
-            a = np.random.randint(4)
+            a = np.random.randint(num_actions)
         else:
             a = best_action
 
