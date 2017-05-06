@@ -102,16 +102,17 @@ class NatureQN(Linear):
 Use deep Q network for test environment.
 """
 if __name__ == '__main__':
-    env = EnvTest((80, 80, 1))
+    with tf.device('/gpu:0'):
+        env = EnvTest((80, 80, 1))
 
-    # exploration strategy
-    exp_schedule = LinearExploration(env, config.eps_begin,
-            config.eps_end, config.eps_nsteps)
+        # exploration strategy
+        exp_schedule = LinearExploration(env, config.eps_begin,
+                config.eps_end, config.eps_nsteps)
 
-    # learning rate schedule
-    lr_schedule  = LinearSchedule(config.lr_begin, config.lr_end,
-            config.lr_nsteps)
+        # learning rate schedule
+        lr_schedule  = LinearSchedule(config.lr_begin, config.lr_end,
+                config.lr_nsteps)
 
-    # train model
-    model = NatureQN(env, config)
-    model.run(exp_schedule, lr_schedule)
+        # train model
+        model = NatureQN(env, config)
+        model.run(exp_schedule, lr_schedule)
